@@ -1,0 +1,331 @@
+# Tornadoes Have Highest Human and Economic Impacts in the United States
+
+**Courtney D. Shelley        
+Reproducible Data: Peer Assessment #2      
+August 22, 2014**
+
+
+
+## Synopsis
+
+Storms and other severe weather events can result in personal injury and property damage.  Predicting and preventing economic costs and injury is a vital mission of the U.S. National Oceanic and Atmospheric Administration (NOAA).  Information regarding severe weather events can be inferred using the NOAA storm database, which tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.  Data was collected from 1950-November 2011.  Early years in the database contain fewer recorded events than in more recent years, though this is presumably due to a lack of good records rather than a significant increase in recent storm events.  
+
+Analysis included cumulative injury/fatality tolls and economic loss due to 15 of the most frequent storm events in the database (thunderstorms, tornados, heat, floods, cold, snow, hurricanes, hail, fire, fog, tidal events, "winter weather", dust storms, rain, and drought).  
+
+Tornados were found to have the greatest impact both on humans and property/agriculture, causing 5633 deaths, 91,349 injuries, and over $3B in property and agricultural damage.  
+
+
+## Data Processing
+
+Data was obtained from the Coursera.org [Reproducible Data course website] [https://class.coursera.org/repdata-005/human_grading/view/courses/972590/assessments/4/submissions].  Data was downloaded on August 20, 2014 at 13:50 PST.  Further documentation for the database is available at [NOAA Storm Events Database] [http://www.ncdc.noaa.gov/stormevents/details.jsp].  The dataset contains 902,297 observations of storm events.  Only relevant datapoints were analyzed, including event type, fatalities, injuries, property damage, and crop damage.  Event labels were standardized and the most frequently occuring event types were analyzed further.  The clean data set was rewritten into a new .csv file.  
+
+```{r readData, eval=FALSE}
+library(data.table)
+setwd("~/RepData_PeerAssessment2")
+keyvars <- c("EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
+myfile <- "repdata-data-StormData.csv"
+stormy <- read.csv(myfile)[,keyvars]
+```
+
+```{r shortData, echo=FALSE}
+library(data.table)
+setwd("~/RepData_PeerAssessment2")
+stormy <-read.csv("abbreviated_StormData.csv")
+```
+
+
+```{r processData}
+## Create consistent event type labeling
+
+stormy$EVTYPE<-gsub("TSTM WIND", "THUNDERSTORM", stormy$EVTYPE)              # THUNDERSTORM
+stormy$EVTYPE<-gsub("THUNDERSTORM WINDS", "THUNDERSTORM", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("THUNDERSTORM WIND", "THUNDERSTORM", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MARINE THUNDERSTORM", "THUNDERSTORM", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("GUSTY THUNDERSTORM", "THUNDERSTORM", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SEVERE THUNDERSTORMS", "THUNDERSTORMS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("THUNDERSTORMS", "THUNDERSTORM", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("THUNDERSTORM/HAIL", "HAIL", stormy$EVTYPE)              # HAIL
+stormy$EVTYPE<-gsub("MARINE HAIL", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SLEET", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HAIL STORM", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SMALL HAIL", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/HAIL", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("NON SEVERE HAIL", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HAIL DAMAGE", "HAIL", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("THUNDERSTORM HAIL", "HAIL", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("FLASH FLOOD", "FLOOD", stormy$EVTYPE)                   # FLOOD
+stormy$EVTYPE<-gsub("FLOODING", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FLOOD/FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("URBAN/SML STREAM FLD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("URBAN/SMALL STREAM FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("URBAN FLOODS", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RIVER FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COASTAL FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("LAKESHORE FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("URBAN FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FLOODS", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("DAM BREAK", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SMALL STREAM AND FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RURAL FLOOD", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SMALL STREAM AND", "FLOOD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MAJOR FLOOD", "FLOOD", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("HIGH WINDS", "WINDS", stormy$EVTYPE)                    # WINDS
+stormy$EVTYPE<-gsub("HIGH WIND", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Strong Wind", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("STRONG WINDS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("STRONG WIND", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WIND", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINDSS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MARINE WINDS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINDS ADVISORY", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("GUSTY WINDS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HIGH WINDS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("GRADIENT WINDS", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("GUSTNADO", "WINDS", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINDS DAMAGE", "WINDS", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("HEAVY RAIN", "RAIN", stormy$EVTYPE)                     # RAIN
+stormy$EVTYPE<-gsub("Heavy Rain", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAVY RAINS", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MONTHLY RAINFALL", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FREEZING RAIN", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MONTHLY PRECIPITATION", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MIXED PRECIPITATION", "RAIN", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("LIGHT RAIN", "RAIN", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("BLIZZARD", "SNOW", stormy$EVTYPE)                       # SNOW
+stormy$EVTYPE<-gsub("HEAVY SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Heavy Snow", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MODERATE SNOWFALL", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("LAKE-EFFECT SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("LAKE EFFECT SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("LIGHT SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW SQUALLS", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ICE/SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FIRST SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW SHOWERS", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("EARLY SNOWFALL", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ICE ON ROAD", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("EXCESSIVE SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Snow", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Light Snow", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/COLD", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW SQUALL", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW-SQUALLS", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/SQUALLS", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/BLOWING", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RECORD SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/BLOWING SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW AND SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAVY LAKE SNOW", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/COLD", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/RAIN", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW RAIN", "SNOW", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Light SNOW", "SNOW", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("EXTREME COLD", "COLD", stormy$EVTYPE)                   # COLD
+stormy$EVTYPE<-gsub("RECORD COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COLD/WINDS CHILL", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FROST/FREEZE", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ICE STORM", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("EXTREME WINDSCHILL", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("PROLONG COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COLD WINDS CHILL TEMPERATURES", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("UNSEASONABLY COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("UNUSUALLY COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FREEZE", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINDS CHILL", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FROST", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HARD COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COLD WEATHER", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("BLACK ICE", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ICE", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINDS/COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COLD TEMPERATURES", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("EXTREME COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SEVERE COLD", "COLD", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COLD WAVE", "COLD", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("EXTREME HEAT", "HEAT", stormy$EVTYPE)                   # HEAT
+stormy$EVTYPE<-gsub("EXCESSIVE HEAT", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RECORD WARM", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RECORD WARMTH", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEATTH", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("UNSEASONABLY WARM", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("PROLONG WARMTH", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RECORD HEAT", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("VERY WARM", "HEAT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAT WAVE", "HEAT", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("WILD/FOREST FIRE", "FIRE", stormy$EVTYPE)              # FIRE
+stormy$EVTYPE<-gsub("WILDFIRE", "FIRE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("DENSE SMOKE", "FIRE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SMOKE", "FIRE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FIRES", "FIRE", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("DENSE FOG", "FOG", stormy$EVTYPE)                      # FOG
+stormy$EVTYPE<-gsub("FREEZING FOG", "FOG", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("WINTER WEATHER/MIX", "WINTER WEATHER", stormy$EVTYPE)  # WINTER WEATHER
+stormy$EVTYPE<-gsub("WINTRY MIX", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("WINTER WEATHER MIX", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Winter Weather", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SNOW/RAIN", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HAIL/RAIN", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("RAIN/HAIL", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAVY MIX", "WINTER WEATHER", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("MIXED PRECIP", "WINTER WEATHER", stormy$EVTYPE)
+
+
+stormy$EVTYPE<-gsub("HURRICANE/TYPHOON", "HURRICANE", stormy$EVTYPE)        # HURRICANE
+stormy$EVTYPE<-gsub("TROPICAL STORM", "HURRICANE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TROPICAL DEPRESSION", "HURRICANE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TYPHOON", "HURRICANE", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("RIP CURRENT", "TIDE", stormy$EVTYPE)                   # TIDE
+stormy$EVTYPE<-gsub("STORM SURGE/TIDE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HIGH SURF", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("STORM SURGE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ASTRONOMICAL HIGH TIDE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("ASTRONOMICAL LOW TIDE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("SEICHE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TSUNAMI", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAVY SURF/TIDE", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TIDES", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TIDE ADVISORY", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HIGH SEAS", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TIDE ADVISORIES", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAVY SURF", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HAZARDOUS SURF", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HIGH WATER", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("High Surf", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("COASTAL FLOODING", "TIDE", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("Coastal Flooding", "TIDE", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("FUNNEL CLOUDS", "TORNADO", stormy$EVTYPE)              # TORNADO
+stormy$EVTYPE<-gsub("TORNADO DEBRIS", "TORNADO", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("FUNNEL", "TORNADO", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("TORNADO CLOUD", "TORNADO", stormy$EVTYPE)
+
+
+stormy$EVTYPE<-gsub("VOLCANIC ASHFALL", "VOLCANIC ASH", stormy$EVTYPE)      # VOLCANIC ASH
+
+stormy$EVTYPE<-gsub("DUST DEVIL", "DUST STORM", stormy$EVTYPE)              # DUST STORM
+stormy$EVTYPE<-gsub("BLOWING DUST", "DUST STORM", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("ABNORMALLY DRY", "DROUGHT", stormy$EVTYPE)             # DROUGHT
+stormy$EVTYPE<-gsub("DRY MICROBURST", "DROUGHT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("UNSEASONABLY DRY", "DROUGHT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("HEAT/DROUGHT", "DROUGHT", stormy$EVTYPE)
+stormy$EVTYPE<-gsub("DRY", "DROUGHT", stormy$EVTYPE)
+
+stormy$EVTYPE<-gsub("Other", "OTHER", stormy$EVTYPE)              
+
+storm<-data.frame(stormy$EVTYPE, stormy[,3:8])     
+
+exp<-storm$PROPDMGEXP     ## Merge PROPDMG and PROPDMGEXP
+  exp[is.na(exp)] = 1             # Replace NAs with 1 for later column multiplication
+  Exp <- as.numeric(exp)          # Converts B to 2, K to 17,  and M to 19
+  Exp[Exp == 17] = 1000           # Replace K with 1000
+  Exp[Exp == 19] = 1000000        # Replace M with 1000000
+  Exp[Exp == 2] = 1000000000      # Replace B with 1000000
+
+PropDMG <- storm$PROPDMG
+PropDMG[is.na(PropDMG)] = 0
+storm$PROPDMG <- PropDMG * Exp
+                                  
+Exp2<-storm$CROPDMGEXP            # Crop Damage
+ levels(Exp2) <- c(levels(Exp2), 1, 1000, 1000000, 1000000000)
+ Exp2[is.na(Exp2)] = 1             # Replace NAs with 1 for later column multiplication
+ Exp2 <- as.numeric(Exp2)          # Converts K to 17 and M to 19
+ Exp2[Exp2 == 17] = 1000           # Replace K with 1000
+ Exp2[Exp2 == 19] = 1000000        # Replace M with 1000000
+ Exp2[Exp2 == 2] = 1000000000      # Replace B with 1000000000
+
+CropDMG<- storm$CROPDMG
+CropDMG[is.na(CropDMG)] = 0
+storm$CROPDMG <- CropDMG * Exp2
+
+
+stormData<-data.table(stormy$EVTYPE, stormy[,3:5], stormy[,7])
+setnames(stormData, old=c("V1", "FATALITIES", "INJURIES", "PROPDMG", "V3"), 
+  new=c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "CROPDMG"))
+write.csv(stormData, "stormData.csv")
+setkey(stormData, EVTYPE)
+```
+
+
+## ANALYSIS
+
+The most frequent storm types were thunderstorms, hail, floods, rain, cold, heat, fire, fog, "winter weather", hurricane, tidal events, tornados, volcanic ash, dust storms, and droughts.  Total human and economic damages were calculated for each event.  Thunder was omitted from further analysis because no human or economic damage was attributed to thunder events.  Cumulative human and ecomonic impacts are presented in the following table, preceded by supporting R code.  
+
+
+```{r analyzeData}
+mainEventTypes<-c("HAIL", "FLOOD", "RAIN", "SNOW", "COLD", "HEAT", "FIRE", "FOG", 
+                  "WINTER WEATHER", "HURRICANE", "TIDE", "TORNADO", "DUST STORM", 
+                  "DROUGHT")
+EVTYPE<-character(); FATALITIES<-numeric(); INJURIES<-numeric(); 
+PROPERTY<-numeric(); CROPDMG<-numeric()
+
+for(i in mainEventTypes) {
+  s<-subset(stormData, stormData$EVTYPE==i)
+    FAT<-sum(s$FATALITIES)    
+    INJ<-sum(s$INJURIES)
+    PROP<-sum(s$PROPDMG) 
+    CROP<-sum(s$INJURIES)
+    EVTYPE<-append(EVTYPE, i, after=length(EVTYPE))
+    FATALITIES<-append(FATALITIES, FAT, after=length(FATALITIES))
+    INJURIES<-append(INJURIES, INJ, after=length(INJURIES))
+    PROPERTY<-append(PROPERTY, PROP, after=length(PROPERTY))
+    CROPDMG<-append(CROPDMG, CROP, after=length(CROP))
+  }
+DT<-data.table(EVTYPE, FATALITIES, INJURIES, PROPERTY, CROPDMG)
+DT
+```
+
+
+### Query 1:  Storm Types Which Inflict the Most Harm to Population Health
+```{r health}
+######  Query 1:  Which storm types do the most population damage?  ######
+
+query1<-DT[order(INJURIES)]       # Order by damage
+names<-c("DROUGHT", "RAIN", "DUST STORM", "WINTER WEATHER", "TIDE", "FOG", "FIRE", "HAIL",
+         "HURRICANE", "SNOW", "COLD", "FLOOD", "HEAT", "TORNADO")
+par(mar=c(5,9,5,5))
+barplot(query1$INJURIES, horiz=TRUE, col = c("darkslategray3"), names.arg=names, las=1, xlim=c(0,90000), xlab="HUMAN IMPACT", main="INJURIES AND FATALITIES DUE TO STORM TYPES")
+par(new=TRUE)
+barplot(query1$FATALITIES, horiz=TRUE, col = "red", xlim=c(0,90000))
+legend("bottomright", pch=22, fill=c("darkslategray3", "red"), legend = c("Injuries", "Fatalities")) 
+```
+
+*FIGURE 1:  Injuries and Fatalities Due to Most Common Storm Events*.  Cumulative health tolls of most common storm events from 1950-November 2011.  Tornados cause the most human devastation, both in number of injuries caused and in number of deaths.  Heat and floods also have large impacts on human health.  
+
+
+
+
+
+### Query 2:  Storm Types Which Inflict the Most Economic Harm
+```{r economic}
+###### Query 2:  Economic Damage ######
+
+query2<-DT[order(PROPERTY)]        # Order by cost
+names<-c("DROUGHT", "RAIN", "DUST STORM", "WINTER WEATHER", "TIDE", "FOG", "FIRE", "HAIL",
+         "HURRICANE", "SNOW", "COLD", "FLOOD", "HEAT", "TORNADO")
+par(mar=c(5,9,5,5))
+barplot(query2$PROPERTY, horiz=TRUE, col = c("gold2"), names.arg=names, las=1, xlim=c(0,3.5e6), xlab="ECONOMIC IMPACT in US$", main="PROPERTY AND CROP DAMAGE DUE TO STORM TYPES")
+par(new=TRUE)
+barplot(query2$CROP, horiz=TRUE, col = "darkorange4", xlim=c(0,3.5e6))
+legend("bottomright", pch=22, fill=c("gold2", "darkorange4"), legend = c("Property", "Crops"))
+```
+   
+*FIGURE 2:  Property and Agricultural Damage Due to Most Common Storm Events*.  Cumulative property and agricultural damage (measured in US dollars) of most common storm events from 1950-November 2011.  Tornados cause the most property damage while cold (including freezes and frosts) had the greatest agricultural impact.   
+
+
+
+
+## Results
+Tornados were found to have the largest impact both in terms of human health and economic loss.  Tornadoes caused the highest number of fatalities (5633 within the period 1950-November 2011), and the greatest number of injuries (91,349 injuries attributable to tornadoes within the study period).  Tornadoes also caused the greatest loss of property ($3.2 billion).   
